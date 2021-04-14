@@ -1,6 +1,10 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+def get_inplanes():
+    return [64, 128, 256, 512]
+
 def activation_func(activation):
     return  nn.ModuleDict([
         ['relu', nn.ReLU(inplace=True)],
@@ -62,14 +66,47 @@ class BasicBlock1(nn.Module):
         return out
     
 
-class BasicBlock2(nn.module):
+#class BasicBlock2(nn.module):
+    #code it in later    
     
-    
-class BasicBlock3(nn.module):             
-    
+#class BasicBlock3(nn.module):             
+    #code it in later    
     
  
     
 
 class SiameseNetwork3D(nn.Module):
-    def __init__(self):
+    def __init__(self,
+                 block,
+                 layers,
+                 block_inplanes,
+                 n_input_channels=3,
+                 conv1_t_size=7,
+                 conv1_t_stride=1,
+                 no_max_pool=False,
+                 shortcut_type='B',
+                 widen_factor=1.0,
+                 n_classes=400):
+        super().__init__()
+        
+        block_inplanes = [int(x * widen_factor) for x in block_inplanes]
+        
+        self.in_planes = block_inplanes[0]
+        self.no_max_pool = no_max_pool
+        
+        # Out=((Input_size − kernal_size + 2*Padding )/ Stride) + 1
+        
+        self.conv1 = nn.Conv3d(n_input_channels,
+                               self.in_planes,
+                               kernel_size=(conv1_t_size, 7, 7),
+                               stride=(conv1_t_stride, 2, 2),
+                               padding=(conv1_t_size // 2, 3, 3),
+                               bias=False)
+        self.bn1 = nn.BatchNorm3d(self.in_planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.layer1 = self._make_layer(block, 
+                                       block_inplanes[0], 
+                                       layers[0],
+                                       shortcut_type)
+        
+        
