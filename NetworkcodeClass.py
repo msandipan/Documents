@@ -139,7 +139,7 @@ class SiameseNetwork3D(nn.Module):
                                        block_inplanes[3], 
                                        layers[4],
                                        shortcut_type,
-                                       stride = 2)7
+                                       stride = 2)
         #stride of block should be 1
         self.layer6 = self._make_layer(block, 
                                        block_inplanes[3], 
@@ -151,8 +151,8 @@ class SiameseNetwork3D(nn.Module):
         self.fc = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
         
         
-        def _downsample_basic_block(self, x, planes, stride):
-            out = F.avg_pool3d(x, kernel_size=1, stride=stride)
+    def _downsample_basic_block(self, x, planes, stride):
+        out = F.avg_pool3d(x, kernel_size=1, stride=stride)
         zero_pads = torch.zeros(out.size(0), planes - out.size(1), out.size(2),
                                 out.size(3), out.size(4))
         if isinstance(out.data, torch.cuda.FloatTensor):
@@ -163,8 +163,8 @@ class SiameseNetwork3D(nn.Module):
         return out
         
         
-        def _make_layer(self, block, planes, blocks, shortcut_type, stride=1):
-            downsample = None
+    def _make_layer(self, block, planes, blocks, shortcut_type, stride=1):
+        downsample = None
         if stride != 1 or self.in_planes != planes * block.expansion:
             if shortcut_type == 'A':
                 downsample = partial(self._downsample_basic_block,
@@ -184,37 +184,42 @@ class SiameseNetwork3D(nn.Module):
                     downsample=downsample))
             self.in_planes = planes * block.expansion
             for i in range(1, blocks):
-                layers.append(block(self.in_planes, planes))        
-        # Output will be saved 
-        def forward_one(self,x):
-            x = self.conv1(x)
-            x = self.bn1(x)
-            x = self.relu(x)
-            if not self.no_max_pool:
-                x = self.maxpool(x)
+                layers.append(block(self.in_planes, planes)) 
                 
-            x = self.layer1(x)
-            x = self.layer2(x)
+                
+            return nn.Sequential(*layers)           
+         
+    def forward_one(self,x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        if not self.no_max_pool:
+            x = self.maxpool(x)
+                
+        x = self.layer1(x)
+        x = self.layer2(x)
                             
-        def concat(self,x):
-            # input 1 is be the 1st image and input 2 are all the consecutive images
-            # forward pass of input 1
-            output1 = self.forward_once(input1)
-            # forward pass of input 2
-            output2 = self.forward_once(input2)
-            # concatenation of all the data along the feature map dimension
-            output_concat = torch.cat((output1,output2),0)
-            return output_concat
+    def concat(self,x):
+        # input 1 is be the 1st image and input 2 are all the consecutive images
+        # forward pass of input 1
+        output1 = self.forward_once(input1)
+        # forward pass of input 2
+        output2 = self.forward_once(input2)
+        # concatenation of all the data along the feature map dimension
+        output_concat = torch.cat((output1,output2),0)
+        return output_concat
         
-        def forward_two(self,output_concat):
-            x = self.layer3(output_concat)
-            x = self.layer4(x)
-            x = self.layer5(x)
-            x = self.layer6(x)
-            x = self.avgpool(x)
-            x = self.fc(x)
+    def forward_two(self,output_concat):
+        x = self.layer3(output_concat)
+        x = self.layer4(x)
+        x = self.layer5(x)
+        x = self.layer6(x)
+        x = self.avgpool(x)
+        x = self.fc(x)
             
-            return x
+        return x
 
-        
+
+def generate_model():  
+    return None  
         
