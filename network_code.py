@@ -1,3 +1,5 @@
+
+from functools import partial
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -174,22 +176,20 @@ class SiameseNetwork3D(nn.Module):
                 downsample = nn.Sequential(
                     conv1x1x1(self.in_planes, planes * block.expansion, stride),
                     nn.BatchNorm3d(planes * block.expansion))
-                
-                
-            layers = []
-            layers.append(
-                block(in_planes=self.in_planes,
-                    planes=planes,
-                    stride=stride,
-                    downsample=downsample))
-            self.in_planes = planes * block.expansion
-            for i in range(1, blocks):
-                layers.append(block(self.in_planes, planes)) 
-                
-                
-            return nn.Sequential(*layers)           
-         
-    def forward_one(self,x):
+
+        layers = []
+        layers.append(
+            block(in_planes=self.in_planes,
+                  planes=planes,
+                  stride=stride,
+                  downsample=downsample))
+        self.in_planes = planes * block.expansion
+        for i in range(1, blocks):
+            layers.append(block(self.in_planes, planes))
+
+        return nn.Sequential(*layers)
+            
+    def forward(self,x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
