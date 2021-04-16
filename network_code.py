@@ -17,7 +17,7 @@ def activation_func(activation):
 def conv3x3x3(in_planes, out_planes, stride=1):
     # 3x3x3 convolution with padding
     return nn.Conv3d(in_planes,
-                     out_planes, 
+                     out_planes,
                      kernel_size=3,
                      stride=stride, 
                      padding=1, 
@@ -199,7 +199,7 @@ class SiameseNetwork3D(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
                             
-    def concat(self,x):
+    def concat(self,input1, input2):
         # input 1 is be the 1st image and input 2 are all the consecutive images
         # forward pass of input 1
         output1 = self.forward_once(input1)
