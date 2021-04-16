@@ -89,7 +89,7 @@ class SiameseNetwork3D(nn.Module):
                  no_max_pool=False,
                  shortcut_type='B',
                  widen_factor=1.0,
-                 n_classes=400):
+                 n_classes=3):
         super().__init__()
         
         block_inplanes = [int(x * widen_factor) for x in block_inplanes]
@@ -202,14 +202,15 @@ class SiameseNetwork3D(nn.Module):
     def concat(self,input1, input2):
         # input 1 is be the 1st image and input 2 are all the consecutive images
         # forward pass of input 1
-        output1 = self.forward_once(input1)
+        output1 = self.forward(input1)
         # forward pass of input 2
-        output2 = self.forward_once(input2)
+        output2 = self.forward(input2)
         # concatenation of all the data along the feature map dimension
         output_concat = torch.cat((output1,output2),0)
         return output_concat
         
-    def forward_two(self,output_concat):
+    def forward_two(self,input1,input2):
+        output_concat = concat(input1,inut2)
         x = self.layer3(output_concat)
         x = self.layer4(x)
         x = self.layer5(x)
@@ -220,6 +221,9 @@ class SiameseNetwork3D(nn.Module):
         return x
 
 
-def generate_model():  
-    return None  
+def generate_model():
+    
+    model = SiameseNetwork3D(BasicBlock1, [1,1,1,1,1,1], get_inplanes(), n_classes=3)  
+    
+    return model  
         
