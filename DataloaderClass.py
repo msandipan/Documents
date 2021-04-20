@@ -1,10 +1,7 @@
 import h5py as h5
 import numpy as np 
-import matplotlib
-import torch
 from torch.utils.data import Dataset
-import torch.nn as nn
-import torch.nn.functional as F
+from plotly import graph_objects as go
 
 class OCTDataset(Dataset):
     """ OCT dataset """
@@ -48,8 +45,8 @@ class OCTDataset(Dataset):
         for i in range(3):
             value = new_pose[i] - old_pose[i]
             groundtruth.append(value)        
-        return groundtruth   
-    
+        return groundtruth
+       
     def view_data(self, index):
         volume = np.array(self.octdata[str(index)])
         x1 = np.linspace(0, 63, 64) 
