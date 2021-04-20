@@ -188,6 +188,8 @@ class SiameseNetwork3D(nn.Module):
             layers.append(block(self.in_planes, planes))
 
         return nn.Sequential(*layers)
+    
+    
             
     def forward(self,x):
         x = self.conv1(x)
@@ -198,19 +200,15 @@ class SiameseNetwork3D(nn.Module):
                 
         x = self.layer1(x)
         x = self.layer2(x)
-                            
-    def concat(self,input1, input2):
-        # input 1 is be the 1st image and input 2 are all the consecutive images
+        
+        return x                     
+            
+    def forward_two(self,input1,input2):
         # forward pass of input 1
         output1 = self.forward(input1)
         # forward pass of input 2
         output2 = self.forward(input2)
-        # concatenation of all the data along the feature map dimension
         output_concat = torch.cat((output1,output2),0)
-        return output_concat
-        
-    def forward_two(self,input1,input2):
-        output_concat = concat(input1,inut2)
         x = self.layer3(output_concat)
         x = self.layer4(x)
         x = self.layer5(x)
