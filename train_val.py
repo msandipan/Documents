@@ -56,4 +56,5 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 5):
 
 
 
-            
+print(torch.cuda.is_available()) 
+print(torch.cuda.current_device())           
