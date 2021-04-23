@@ -225,3 +225,5 @@ def generate_model():
     
     return model  
         
+        
+#model = generate_model()        

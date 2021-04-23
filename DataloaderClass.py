@@ -7,7 +7,7 @@ class OCTDataset(Dataset):
     """ OCT dataset """
     
     
-    def __init__(self, h5_file, transform = None, init_index = 1):
+    def __init__(self, h5_file, transform = None, init_index = 1, train = False):
         """
         Args:
             h5_file (string): Path to the h5 file with annotations and images.
@@ -19,6 +19,7 @@ class OCTDataset(Dataset):
         self.octdata = self.h5_file['octdata']
         self.init_index = init_index
         self.transform = transform
+        self.train = train
         
         
     def __len__(self):
@@ -27,12 +28,22 @@ class OCTDataset(Dataset):
     def __getitem__(self, index): 
         """
         Args:
-            index (int) : Index of the singlular data to be transformed/called         
+            index (int) : Index of the singlular data to be transformed/called
+            always starts from 1         
         """
-        datum = self.octdata[str(index)]
-        if self.transform is not None:
-            datum = self.transform(datum)
-        return datum, self.position[str(index)]  
+        if self.train == False:
+            datum = self.octdata[str(index)]
+            pos = self.position[str(index)]
+            if self.transform is not None:
+                datum = self.transform(datum)
+        else:
+            datum = np.array(self.octdata[str(index)]) 
+            pos = np.array(self.position[str(index)])       
+            if self.transform is not None:
+                datum = self.transform(datum)          
+                
+        return datum, pos 
+        # make it return groundtruth
     
     def close(self):
         self.h5_file.close() 
@@ -46,7 +57,7 @@ class OCTDataset(Dataset):
             value = new_pose[i] - old_pose[i]
             groundtruth.append(value)        
         return groundtruth
-       
+    
     def view_data(self, index):
         volume = np.array(self.octdata[str(index)])
         x1 = np.linspace(0, 63, 64) 
@@ -65,5 +76,7 @@ class OCTDataset(Dataset):
         opacity=0.5, 
         caps= dict(x_show=False, y_show=False, z_show=True)
         )) 
-        return fig             
+        return fig 
+    
+                
                 
