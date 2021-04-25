@@ -34,34 +34,46 @@ class OCTDataset(Dataset):
     def __len__(self):
         return len(self.octdata)
     
+    def get_value(self, index):
+        if self.train == False:
+            datum = self.octdata[str(index)]
+            pos = self.position[str(index)]
+            groundT = self.groundTruth(index)
+            if self.transform is not None:
+                datum = self.transform(datum)
+        else:
+            datum = np.array(self.octdata[str(index)]) 
+            pos = np.array(self.position[str(index)]) 
+            groundT = self.groundTruth(index)      
+            if self.transform is not None:
+                datum = self.transform(datum)
+                          
+                
+        return datum, groundT 
+        # make it return groundtruth
+    
     def __getitem__(self, index): 
         """
         Args:
             index (int) : Index of the singlular data to be transformed/called
             always starts from 1         
         """
-        if index < len(self.octdata):
-            index = index+1
-            if self.train == False:
-                datum = self.octdata[str(index)]
-                pos = self.position[str(index)]
-                groundT = self.groundTruth(index)
-                if self.transform is not None:
-                    datum = self.transform(datum)
-            else:
-                datum = np.array(self.octdata[str(index)]) 
-                pos = np.array(self.position[str(index)]) 
-                groundT = self.groundTruth(index)      
-                if self.transform is not None:
-                    datum = self.transform(datum)
-                          
-                
-        return datum, groundT 
-        # make it return groundtruth
+        #need to implement slice stuff
+        if isinstance(index, slice):
+              start, stop, step = index.indices(len(self))
+              start = start+1
+              stop = stop+1
+              return [self[i] for i in range(start, stop, step)] 
+        elif isinstance(index, int):
+              return self.get_value(index)
+        else:
+              raise TypeError('Invalid argument type: {}'.format(type(index)))  
+            
+           
+        
     
     def close(self):
-        self.h5_file.close() 
-        
+        self.h5_file.close()       
     
     
     
