@@ -13,6 +13,10 @@ class OCTDataset(Dataset):
             h5_file (string): Path to the h5 file with annotations and images.
             transform (callable, optional): Optional transform to be applied
             on a sample.
+            init_index (int) : Defines the image that the rest of the dtaset
+            should be compared to
+            train (boolean,optional) : If true the data output will be in the form 
+            of arrays/lists else it will be a Dataset object
         """
         self.h5_file = h5.File(h5_file, 'r')
         self.position = self.h5_file['position']
@@ -22,6 +26,12 @@ class OCTDataset(Dataset):
         self.train = train
         
     def groundTruth(self, index):
+    """
+    
+    Args:
+    
+    """    
+        
         groundtruth = []
         old_pose = np.array(self.position[str(self.init_index)])
         new_pose = np.array(self.position[str(index)])
@@ -106,6 +116,6 @@ class OCTDataset(Dataset):
         )) 
         return fig 
     
-#file = "/home/Mukherjee/Data/Cross_ext.h5"
+file = "/home/Mukherjee/Data/Cross_ext.h5"
 #data = OCTDataset(h5_file = file, train = True)                
                 
