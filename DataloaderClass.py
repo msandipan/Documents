@@ -60,14 +60,23 @@ class OCTDataset(Dataset):
         """
         #need to implement slice stuff
         if isinstance(index, slice):
-              start, stop, step = index.indices(len(self))
-              start = start+1
-              stop = stop+1
-              return [self[i] for i in range(start, stop, step)] 
+            start, stop, step = index.indices(len(self))
+            data_array = np.empty((100,),dtype = object)
+            gt_array = np.empty((100,),dtype = object)
+            for i in range(start, stop, step):
+                data,gt = self[i]
+                data_array[i] = data
+                gt_array[i] = gt
+            
+            return data_array,gt_array 
         elif isinstance(index, int):
-              return self.get_value(index)
+            if index >= len(self):
+                raise IndexError('Index is out of bounds')
+            if index<len(self):
+                index = index+1
+            return self.get_value(index)
         else:
-              raise TypeError('Invalid argument type: {}'.format(type(index)))  
+            raise TypeError('Invalid argument type: {}'.format(type(index)))  
             
            
         
@@ -97,5 +106,6 @@ class OCTDataset(Dataset):
         )) 
         return fig 
     
-                
+#file = "/home/Mukherjee/Data/Cross_ext.h5"
+#data = OCTDataset(h5_file = file, train = True)                
                 
