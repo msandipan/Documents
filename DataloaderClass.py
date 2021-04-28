@@ -2,6 +2,7 @@ import h5py as h5
 import numpy as np 
 from torch.utils.data import Dataset
 from plotly import graph_objects as go
+from torchvision import transforms
 
 class OCTDataset(Dataset):
     """ OCT dataset """
@@ -25,12 +26,9 @@ class OCTDataset(Dataset):
         self.transform = transform
         self.train = train
         
+        
     def groundTruth(self, index):
-    """
-    
-    Args:
-    
-    """    
+      
         
         groundtruth = []
         old_pose = np.array(self.position[str(self.init_index)])
@@ -45,21 +43,24 @@ class OCTDataset(Dataset):
         return len(self.octdata)
     
     def get_value(self, index):
+        
+        #reshape to add another dimensiondata
         if self.train == False:
             datum = self.octdata[str(index)]
+            
             pos = self.position[str(index)]
             groundT = self.groundTruth(index)
             if self.transform is not None:
                 datum = self.transform(datum)
         else:
-            datum = np.array(self.octdata[str(index)]) 
+            datum = np.array(self.octdata[str(index)])            
             pos = np.array(self.position[str(index)]) 
             groundT = self.groundTruth(index)      
             if self.transform is not None:
                 datum = self.transform(datum)
                           
                 
-        return datum, groundT 
+        return datum.reshape(-1,64,64,1), groundT 
         # make it return groundtruth
     
     def __getitem__(self, index): 
@@ -71,8 +72,8 @@ class OCTDataset(Dataset):
         #need to implement slice stuff
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self))
-            data_array = np.empty((100,),dtype = object)
-            gt_array = np.empty((100,),dtype = object)
+            data_array = np.empty((len(self),),dtype = object)
+            gt_array = np.empty((len(self),),dtype = object)
             for i in range(start, stop, step):
                 data,gt = self[i]
                 data_array[i] = data
@@ -117,5 +118,6 @@ class OCTDataset(Dataset):
         return fig 
     
 file = "/home/Mukherjee/Data/Cross_ext.h5"
-#data = OCTDataset(h5_file = file, train = True)                
+transform = transforms.Compose([transforms.ToTensor()])
+data = OCTDataset(h5_file = file, train = True)                
                 
