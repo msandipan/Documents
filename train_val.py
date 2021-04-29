@@ -1,5 +1,7 @@
 from torch.utils.data import random_split
+
 import torch
+from torchvision import transforms
 import numpy as np
 from DataloaderClass import OCTDataset
 import Network
@@ -9,18 +11,22 @@ import torch.nn as nn
 
 #need to call dtaloader class nd split into train, val and test
 
-def train_val_test_split(h5_file, train_per = 70, seed = 42):
+def train_val_test_split(h5_file, train_per = 0.7, seed = 42):
     
-    octdataset = OCTDataset(h5_file,train= True)
+    octdataset = OCTDataset(h5_file,transform = transforms.Compose([transforms.ToTensor()]),train= True)
     
     length = len(octdataset)
-    train_len = int(length*train_per/100)
+    train_len = int(length*train_per)
     val_len = length-train_len
      
-    octdata = octdataset[:][0]    
-    train_data,val_data = random_split(octdata,
-                                       [train_len, val_len],
+    oct_data = octdataset[:]
+     
+    #print(octdata[0].shape)   
+    train_data,val_data = random_split(oct_data,
+                                      [train_len, val_len],
                                        torch.Generator().manual_seed(seed))
+    
+    
     
     return train_data,val_data
     
@@ -37,10 +43,10 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 5):
     for e in range(epochs):
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
-        for data in trainloader:
+        for data, labels in trainloader:
             if torch.cuda.is_available():
                 data, labels = data.cuda(), labels.cuda()
-            
+             
             optimizer.zero_grad()
             target = model(data)
             loss = criterion(target,labels)
@@ -72,11 +78,12 @@ file = "/home/Mukherjee/Data/Cross_ext.h5"
 train,valid = train_val_test_split(h5_file = file,
                                    train_per = 70,                                        
                                    seed = 42)
-train_loader = torch.utils.data.DataLoader(dataset = train, batch_size= 1)
-valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
+train_loader = torch.utils.data.DataLoader(dataset = train, batch_size= 5)
+valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 5)
 
 
 model = Network.generate_model() 
+model = model.double()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
