@@ -30,13 +30,15 @@ class OCTDataset(Dataset):
     def groundTruth(self, index):
       
         
-        groundtruth = []
-        old_pose = np.array(self.position[str(self.init_index)])
-        new_pose = np.array(self.position[str(index)])
+        groundtruth = np.empty((3,),dtype = int)
+        old_pose = self.position[str(self.init_index)]
+        new_pose = self.position[str(index)]
         for i in range(3):
             value = new_pose[i] - old_pose[i]
-            groundtruth.append(value)        
+            groundtruth[i] = value      
         return groundtruth
+    
+    
     
         
     def __len__(self):
@@ -58,9 +60,9 @@ class OCTDataset(Dataset):
             groundT = self.groundTruth(index)      
             if self.transform is not None:
                 datum = self.transform(datum)
-                          
+                datum = datum.reshape(1,-1,64,64)              
                 
-        return datum.reshape(-1,64,64,1), groundT 
+        return datum, groundT 
         # make it return groundtruth
     
     def __getitem__(self, index): 
@@ -72,14 +74,15 @@ class OCTDataset(Dataset):
         #need to implement slice stuff
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self))
-            data_array = np.empty((len(self),),dtype = object)
-            gt_array = np.empty((len(self),),dtype = object)
-            for i in range(start, stop, step):
-                data,gt = self[i]
-                data_array[i] = data
-                gt_array[i] = gt
+            #data_array = np.empty((len(self),),dtype = object)
+            #gt_array = np.empty((len(self),),dtype = object)
+            #for i in range(start, stop, step):
+            #    data,gt = self[i]
+            #    data_array[i] = data
+            #    gt_array[i] = gt
             
-            return data_array,gt_array 
+            #return data_array,gt_array 
+            return [self[i] for i in range(start, stop, step)]
         elif isinstance(index, int):
             if index >= len(self):
                 raise IndexError('Index is out of bounds')
@@ -117,7 +120,7 @@ class OCTDataset(Dataset):
         )) 
         return fig 
     
-file = "/home/Mukherjee/Data/Cross_ext.h5"
-transform = transforms.Compose([transforms.ToTensor()])
-data = OCTDataset(h5_file = file, train = True)                
+#file = "/home/Mukherjee/Data/Cross_ext.h5"
+#transform = transforms.Compose([transforms.ToTensor()])
+#data = OCTDataset(h5_file = file,transform=transform, train = True)                
                 

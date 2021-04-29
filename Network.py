@@ -83,7 +83,7 @@ class SiameseNetwork3D(nn.Module):
                  block,
                  layers,
                  block_inplanes,
-                 n_input_channels=3,
+                 n_input_channels=1,
                  conv1_t_size=7,
                  conv1_t_stride=1,
                  no_max_pool=False,
@@ -108,6 +108,7 @@ class SiameseNetwork3D(nn.Module):
                                bias=False)
         self.bn1 = nn.BatchNorm3d(self.in_planes)
         self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
         # stride of block should be 2
         self.layer1 = self._make_layer(block, 
                                        block_inplanes[0], 
@@ -192,7 +193,7 @@ class SiameseNetwork3D(nn.Module):
     
             
     def forward(self,x):
-        x = self.conv1(x)
+        x = self.conv1(x.double())
         x = self.bn1(x)
         x = self.relu(x)
         if not self.no_max_pool:
@@ -226,4 +227,4 @@ def generate_model():
     return model  
         
         
-#model = generate_model()        
+model = generate_model()        
