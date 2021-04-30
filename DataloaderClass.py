@@ -140,7 +140,7 @@ class OCTDataset(Dataset):
         ))
         return fig
 
-file = "/home/Mukherjee/Data/Cross_ext.h5"
-trans = transforms.Compose([transforms.ToTensor()])
+#file = "/home/Mukherjee/Data/Cross_ext.h5"
+#trans = transforms.Compose([transforms.ToTensor()])
 #data = OCTDataset(h5_file = file,transform=transform, train = True)
-data = OCTDataset(h5_file = file, train = False)
+#data = OCTDataset(h5_file = file, train = False)
