@@ -52,6 +52,8 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
 
             optimizer.zero_grad()
             target = model(traininit,data)
+            #print(traininit.shape,data.shape)
+            #print(target.shape,labels.shape)
             loss = criterion(target,labels)
             loss.backward()
             optimizer.step()
@@ -64,7 +66,9 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
                 data, labels = data.cuda(), labels.cuda()
 
             target = model(traininit,data)
+
             loss = criterion(target,labels)
+
             valid_loss = loss.item() * data.size(0)
 
         print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(validloader)}')
@@ -81,8 +85,8 @@ file = "/home/Mukherjee/Data/Cross_ext.h5"
 train,valid,init = train_val_test_split(h5_file = file,
                                    train_per = 70,
                                    seed = 42)
-train_loader = torch.utils.data.DataLoader(dataset = train, batch_size= 5)
-valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 5)
+train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1)
+valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
 
 
 model = Network.generate_model()
