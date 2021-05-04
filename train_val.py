@@ -1,5 +1,5 @@
 from torch.utils.data import random_split
-
+from tqdm import tqdm
 import torch
 from torchvision import transforms
 import numpy as np
@@ -46,14 +46,15 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
     for e in range(epochs):
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
-        for data, labels in trainloader:
+        for data, labels in tqdm(trainloader):
             if torch.cuda.is_available():
                 data, labels = data.cuda(), labels.cuda()
 
             optimizer.zero_grad()
             target = model(traininit,data)
+            labels = labels.double()
             #print(traininit.shape,data.shape)
-            #print(target.shape,labels.shape)
+            #print(target.dtype,labels.dtype)
             loss = criterion(target,labels)
             loss.backward()
             optimizer.step()
@@ -61,13 +62,14 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
 
         valid_loss = 0.0
         model.eval()     # Optional when not using Model Specific layer
-        for data, labels in validloader:
+        for data, labels in tqdm(validloader):
             if torch.cuda.is_available():
                 data, labels = data.cuda(), labels.cuda()
 
             target = model(traininit,data)
-
+            labels = labels.double()
             loss = criterion(target,labels)
+
 
             valid_loss = loss.item() * data.size(0)
 
@@ -83,8 +85,9 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
 file = "/home/Mukherjee/Data/Cross_ext.h5"
 
 train,valid,init = train_val_test_split(h5_file = file,
-                                   train_per = 70,
+                                   train_per = 0.7,
                                    seed = 42)
+#print(len(train),len(valid))
 train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1)
 valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
 
@@ -92,8 +95,8 @@ valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
 model = Network.generate_model()
 model = model.double()
 
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
+criterion = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr = 0.000001)
 
 train_val(model = model,
           traininit= init,
