@@ -3,10 +3,14 @@ from tqdm import tqdm
 import torch
 from torchvision import transforms
 import numpy as np
+import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 from DataloaderClass import OCTDataset
 import Network
-import torch.nn as nn
 
+
+
+writer = SummaryWriter('runs/Siamese_net_experiment_1')
 
 
 #need to call dtaloader class nd split into train, val and test
@@ -37,16 +41,18 @@ def train_val_test_split(h5_file, train_per = 0.7, seed = 42):
 
 
 
-def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epochs = 5):
+def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epochs = 5,plot = False):
 
     #criterion = nn.CrossEntropyLoss()
     #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
     min_valid_loss = np.inf
-
+    i = 0
+    running_loss = 0.0
     for e in range(epochs):
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
         for data, labels in tqdm(trainloader):
+            i = i+1
             if torch.cuda.is_available():
                 data, labels = data.cuda(), labels.cuda()
 
@@ -58,7 +64,18 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
             loss = criterion(target,labels)
             loss.backward()
             optimizer.step()
+            if plot == True:
+                running_loss += loss.item()
+                if i % 10 == 9:    # every 10 mini-batches...
+
+                    # ...log the running loss
+                    writer.add_scalar('training loss',
+                            running_loss / 1000,
+                            epochs * len(trainloader) + i)
+                    running_loss = 0.0
+
             train_loss = loss.item() * data.size(0)
+
 
         valid_loss = 0.0
         model.eval()     # Optional when not using Model Specific layer
@@ -80,6 +97,8 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
             # Saving State Dict
             torch.save(model.state_dict(), 'saved_model.pth')
 
+#def visualization(model,trainloader,):
+
 
 
 file = "/home/Mukherjee/Data/Cross_ext.h5"
@@ -95,16 +114,18 @@ valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
 model = Network.generate_model()
 model = model.double()
 
-criterion = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr = 0.000001)
-
+criterion = nn.L1Loss()
+#optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
+optimizer = torch.optim.Adam(model.parameters(),lr = 0.001)
 train_val(model = model,
           traininit= init,
           trainloader = train_loader,
           validloader = valid_loader,
           criterion= criterion,
           optimizer= optimizer,
-          epochs= 1)
+          epochs= 3,plot = True)
+
+
 
 
 
