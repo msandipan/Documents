@@ -33,15 +33,15 @@ def train_val_test_split(h5_file, train_per = 0.7, seed = 42):
                                       [train_len, val_len],
                                        torch.Generator().manual_seed(seed))
 
+    all_data = oct_data
+
+    return train_data,val_data,oct_data_init,all_data
 
 
-    return train_data,val_data,oct_data_init
 
 
 
-
-
-def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epochs = 5,plot = False):
+def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, optimizer, epochs = 5,plot = False):
 
     #criterion = nn.CrossEntropyLoss()
     #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
@@ -51,51 +51,52 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
     for e in range(epochs):
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
-        for data, labels in tqdm(trainloader):
-            i = i+1
-            if torch.cuda.is_available():
-                data, labels = data.cuda(), labels.cuda()
+        for init_data,init_labels in tqdm(all_dataloader):
+            for data, labels in trainloader:
+                i = i+1
+                if torch.cuda.is_available():
+                    data, labels = data.cuda(), labels.cuda()
 
-            optimizer.zero_grad()
-            target = model(traininit,data)
-            labels = labels.double()
-            #print(traininit.shape,data.shape)
-            #print(target.dtype,labels.dtype)
-            loss = criterion(target,labels)
-            loss.backward()
-            optimizer.step()
-            if plot == True:
-                running_loss += loss.item()
-                if i % 10 == 9:    # every 10 mini-batches...
+                optimizer.zero_grad()
+                target = model(init_data,data)
+                labels = labels.double()
+                #print(traininit.shape,data.shape)
+                #print(target.dtype,labels.dtype)
+                loss = criterion(target,labels)
+                loss.backward()
+                optimizer.step()
+                if plot == True:
+                    running_loss += loss.item()
+                    if i % 10 == 9:    # every 10 mini-batches...
 
-                    # ...log the running loss
-                    writer.add_scalar('training loss',
-                            running_loss / 1000,
-                            epochs * len(trainloader) + i)
-                    running_loss = 0.0
+                        # ...log the running loss
+                        writer.add_scalar('training loss',
+                                running_loss / 1000,
+                                epochs * len(trainloader) + i)
+                        running_loss = 0.0
 
-            train_loss = loss.item() * data.size(0)
-
-
-        valid_loss = 0.0
-        model.eval()     # Optional when not using Model Specific layer
-        for data, labels in tqdm(validloader):
-            if torch.cuda.is_available():
-                data, labels = data.cuda(), labels.cuda()
-
-            target = model(traininit,data)
-            labels = labels.double()
-            loss = criterion(target,labels)
+                train_loss = loss.item() * data.size(0)
 
 
-            valid_loss = loss.item() * data.size(0)
+            valid_loss = 0.0
+            model.eval()     # Optional when not using Model Specific layer
+            for data, labels in validloader:
+                if torch.cuda.is_available():
+                    data, labels = data.cuda(), labels.cuda()
 
-        print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(validloader)}')
-        if min_valid_loss > valid_loss:
-            print(f'Validation Loss Decreased({min_valid_loss:.6f}--->{valid_loss:.6f}) \t Saving The Model')
-            min_valid_loss = valid_loss
-            # Saving State Dict
-            torch.save(model.state_dict(), 'saved_model.pth')
+                target = model(init_data,data)
+                labels = labels.double()
+                loss = criterion(target,labels)
+
+
+                valid_loss = loss.item() * data.size(0)
+
+            print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(validloader)}')
+            if min_valid_loss > valid_loss:
+                print(f'Validation Loss Decreased({min_valid_loss:.6f}--->{valid_loss:.6f}) \t Saving The Model')
+                min_valid_loss = valid_loss
+                # Saving State Dict
+                torch.save(model.state_dict(), 'saved_model.pth')
 
 #def visualization(model,trainloader,):
 
@@ -103,13 +104,13 @@ def train_val(model,traininit,trainloader,validloader,criterion, optimizer, epoc
 
 file = "/home/Mukherjee/Data/Cross_ext.h5"
 
-train,valid,init = train_val_test_split(h5_file = file,
+train,valid,init,all_data = train_val_test_split(h5_file = file,
                                    train_per = 0.7,
                                    seed = 42)
 #print(len(train),len(valid))
 train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1)
 valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
-
+all_loader = torch.utils.data.DataLoader(dataset = all_data, batch_size= 1)
 
 model = Network.generate_model()
 model = model.double()
@@ -118,13 +119,14 @@ criterion = nn.L1Loss()
 #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
 optimizer = torch.optim.Adam(model.parameters(),lr = 0.001)
 train_val(model = model,
-          traininit= init,
+          init_data = init,
+          all_dataloader=all_loader,
           trainloader = train_loader,
           validloader = valid_loader,
           criterion= criterion,
           optimizer= optimizer,
-          epochs= 3,plot = True)
-
+          epochs= 1,plot = True)
+#tensorboard --logdir=runs
 
 
 
