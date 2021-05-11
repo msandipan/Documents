@@ -4,6 +4,7 @@ import torch
 from torchvision import transforms
 import numpy as np
 import torch.nn as nn
+import sys
 from torch.utils.tensorboard import SummaryWriter
 from DataloaderClass import OCTDataset
 import Network
@@ -67,7 +68,7 @@ def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, 
                 optimizer.step()
                 if plot == True:
                     running_loss += loss.item()
-                    if i % 10 == 9:    # every 10 mini-batches...
+                    if i % 100 == 99:    # every 10 mini-batches...
 
                         # ...log the running loss
                         writer.add_scalar('training loss',
@@ -102,31 +103,67 @@ def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, 
 
 
 
-file = "/home/Mukherjee/Data/Cross_ext.h5"
+#file = "/home/Mukherjee/Data/Cross_ext.h5"
 
-train,valid,init,all_data = train_val_test_split(h5_file = file,
-                                   train_per = 0.7,
-                                   seed = 42)
+#train,valid,init,all_data = train_val_test_split(h5_file = file,
+#                                   train_per = 0.7,
+#                                   seed = 42)
 #print(len(train),len(valid))
-train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1)
-valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
-all_loader = torch.utils.data.DataLoader(dataset = all_data, batch_size= 1)
+#train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1)
+#valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
+#all_loader = torch.utils.data.DataLoader(dataset = all_data, batch_size= 1)
 
-model = Network.generate_model()
-model = model.double()
+#model = Network.generate_model()
+#model = model.double()
 
-criterion = nn.L1Loss()
+#criterion = nn.L1Loss()
 #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
-optimizer = torch.optim.Adam(model.parameters(),lr = 0.001)
-train_val(model = model,
-          init_data = init,
-          all_dataloader=all_loader,
-          trainloader = train_loader,
-          validloader = valid_loader,
-          criterion= criterion,
-          optimizer= optimizer,
-          epochs= 1,plot = True)
+#optimizer = torch.optim.Adam(model.parameters(),lr = 0.001)
+#train_val(model = model,
+#          init_data = init,
+#          all_dataloader=all_loader,
+#          trainloader = train_loader,
+#          validloader = valid_loader,
+#          criterion= criterion,
+#          optimizer= optimizer,
+#          epochs= 1,plot = True)
 #tensorboard --logdir=runs
+def main():
+    file = sys.argv[1]
+    train,valid,init,all_data = train_val_test_split(h5_file = file,
+                                          train_per = 0.7,
+                                          seed = 42)
+    train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1)
+    valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
+    all_loader = torch.utils.data.DataLoader(dataset = all_data, batch_size= 1)
+
+    model = Network.generate_model()
+    model = model.double()
+    if torch.cuda.is_available():
+        model = model.cuda()
+    epochs = int(sys.argv[2])
+    lr = float(sys.argv[3])
+    #print(lr.dtype)
+    criterion = nn.L1Loss()
+    optimizer = torch.optim.SGD(model.parameters(), lr = lr)
+    #optimizer = torch.optim.Adam(model.parameters(),lr = lr)
+
+
+
+
+    train_val(model = model,
+            init_data=init,
+            all_dataloader = all_loader,
+            trainloader = train_loader,
+            validloader = valid_loader,
+            criterion= criterion,
+            optimizer= optimizer,
+            epochs= epochs,plot = False)
+
+
+if __name__ == "__main__":
+    main()
+
 
 
 
