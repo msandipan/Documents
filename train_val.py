@@ -56,6 +56,7 @@ def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, 
             for data, labels in trainloader:
                 i = i+1
                 if torch.cuda.is_available():
+                    init_data = init_data.cuda()
                     data, labels = data.cuda(), labels.cuda()
 
                 optimizer.zero_grad()
@@ -83,6 +84,7 @@ def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, 
             model.eval()     # Optional when not using Model Specific layer
             for data, labels in validloader:
                 if torch.cuda.is_available():
+                    init_data = init_data.cuda()
                     data, labels = data.cuda(), labels.cuda()
 
                 target = model(init_data,data)
