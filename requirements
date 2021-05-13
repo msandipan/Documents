@@ -1,0 +1,8 @@
+pytorch
+numpy
+h5py
+plotly
+torchvision
+tqdm
+pandas
+tensorboard
