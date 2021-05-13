@@ -42,7 +42,7 @@ def train_val_test_split(h5_file, train_per = 0.7, seed = 42):
 
 
 
-def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, optimizer, epochs = 5,plot = False):
+def train_val(model,init_data,trainloader,validloader,criterion, optimizer, epochs = 5,plot = False):
 
     #criterion = nn.CrossEntropyLoss()
     #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
@@ -52,54 +52,52 @@ def train_val(model,init_data,all_dataloader,trainloader,validloader,criterion, 
     for e in range(epochs):
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
-        for init_data,init_labels in tqdm(all_dataloader):
-            for data, labels in trainloader:
-                i = i+1
-                if torch.cuda.is_available():
-                    init_data = init_data.cuda()
-                    data, labels = data.cuda(), labels.cuda()
 
-                optimizer.zero_grad()
-                target = model(init_data,data)
-                labels = labels.double()
-                #print(traininit.shape,data.shape)
-                #print(target.dtype,labels.dtype)
-                loss = criterion(target,labels)
-                loss.backward()
-                optimizer.step()
-                if plot == True:
-                    running_loss += loss.item()
-                    if i % 100 == 99:    # every 10 mini-batches...
+        for data, labels in tqdm(trainloader):
+            i = i+1
+            if torch.cuda.is_available():
+                init_data = init_data.cuda()
+                data, labels = data.cuda(), labels.cuda()
 
-                        # ...log the running loss
-                        writer.add_scalar('training loss',
-                                running_loss / 1000,
-                                epochs * len(trainloader) + i)
-                        running_loss = 0.0
+            optimizer.zero_grad()
+            target = model(init_data,data)
+            labels = labels.double()
+            #print(traininit.shape,data.shape)
+            #print(target.dtype,labels.dtype)
+            loss = criterion(target,labels)
+            loss.backward()
+            optimizer.step()
+            if plot == True:
+                running_loss += loss.item()
+                if i % 100 == 99:    # every 10 mini-batches...
+                    # ...log the running loss
+                    writer.add_scalar('training loss',
+                            running_loss / 1000,
+                            epochs * len(trainloader) + i)
+                    running_loss = 0.0
 
-                train_loss = loss.item() * data.size(0)
-
-
-            valid_loss = 0.0
-            model.eval()     # Optional when not using Model Specific layer
-            for data, labels in validloader:
-                if torch.cuda.is_available():
-                    init_data = init_data.cuda()
-                    data, labels = data.cuda(), labels.cuda()
-
-                target = model(init_data,data)
-                labels = labels.double()
-                loss = criterion(target,labels)
+            train_loss = loss.item() * data.size(0)
 
 
-                valid_loss = loss.item() * data.size(0)
+        valid_loss = 0.0
+        model.eval()     # Optional when not using Model Specific layer
+        for data, labels in tqdm(validloader):
+            if torch.cuda.is_available():
+                init_data = init_data.cuda()
+                data, labels = data.cuda(), labels.cuda()
+            target = model(init_data,data)
+            labels = labels.double()
+            loss = criterion(target,labels)
 
-            print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(validloader)}')
-            if min_valid_loss > valid_loss:
-                print(f'Validation Loss Decreased({min_valid_loss:.6f}--->{valid_loss:.6f}) \t Saving The Model')
-                min_valid_loss = valid_loss
-                # Saving State Dict
-                torch.save(model.state_dict(), 'saved_model.pth')
+
+            valid_loss = loss.item() * data.size(0)
+
+        print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(validloader)}')
+        if min_valid_loss > valid_loss:
+            print(f'Validation Loss Decreased({min_valid_loss:.6f}--->{valid_loss:.6f}) \t Saving The Model')
+            min_valid_loss = valid_loss
+            # Saving State Dict
+            torch.save(model.state_dict(), 'saved_model.pth')
 
 #def visualization(model,trainloader,):
 
@@ -155,7 +153,7 @@ def main():
 
     train_val(model = model,
             init_data=init,
-            all_dataloader = all_loader,
+
             trainloader = train_loader,
             validloader = valid_loader,
             criterion= criterion,
