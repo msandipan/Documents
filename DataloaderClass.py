@@ -8,7 +8,7 @@ class OCTDataset(Dataset):
     """ OCT dataset """
 
 
-    def __init__(self, h5_file, transform = None, init_index = 1, train = False):
+    def __init__(self, h5_file, index_list, transform = None, train = False):
         """
         Args:
             h5_file (string): Path to the h5 file with annotations and images.
@@ -22,12 +22,13 @@ class OCTDataset(Dataset):
         self.h5_file = h5.File(h5_file, 'r')
         self.position = self.h5_file['position']
         self.octdata = self.h5_file['octdata']
-        self.init_index = init_index
+        #self.init_index = init_index
         self.transform = transform
         self.train = train
+        self.index_list = index_list
 
 
-    def groundTruth(self, index):
+    def groundTruth(self, index, init_index):
         """
         Args:
             index (int): To specifiy the index which will be compared to the init
@@ -40,12 +41,12 @@ class OCTDataset(Dataset):
 
 
         groundtruth = np.empty((3,),dtype = int)
-        old_pose = self.position[str(self.init_index)]
+        old_pose = self.position[str(init_index)]
         new_pose = self.position[str(index)]
         for i in range(3):
             value = new_pose[i] - old_pose[i]
             groundtruth[i] = value
-            return groundtruth
+        return groundtruth
 
 
 
@@ -55,9 +56,9 @@ class OCTDataset(Dataset):
         Out:
             Return the length of the dataset.
         """
-        return len(self.octdata)
+        return len(self.index_list)
 
-    def get_value(self, index):
+    def get_value(self, init_index, index):
         """
         Args:
             index (int): Index of the data/label that was called
@@ -76,20 +77,24 @@ class OCTDataset(Dataset):
 
         if self.train is True:
             datum = np.array(self.octdata[str(index)])
+            init_data = np.array(self.octdata[str(init_index)])
             pos = np.array(self.position[str(index)])
-            groundT = self.groundTruth(index)
+            groundT = self.groundTruth(index,init_index)
             if self.transform is not None:
                 datum = self.transform(datum)
                 datum = datum.reshape(1,-1,64,64)
-            return datum, groundT
+            return init_data, datum, groundT
         datum = self.octdata[str(index)]
+        init_data = np.array(self.octdata[str(init_index)])
         pos = self.position[str(index)]
-        groundT = self.groundTruth(index)
+        groundT = self.groundTruth(index,init_index)
         if self.transform is not None:
             datum = self.transform(datum)
             datum = datum.reshape(1,-1,64,64)
-        return datum, pos
-    def __getitem__(self, index):
+        return init_data, datum, pos
+
+
+    def __getitem__(self,index):
         """
         Args:
             index (int) : Index of the singlular data to be transformed/called
@@ -98,17 +103,22 @@ class OCTDataset(Dataset):
         Out:
 
         """
+
+        #init_index = self.init_index
         #need to implement slice stuff
         if isinstance(index, slice):
-            start, stop, step = index.indices(len(self))
+            start, stop, step = index.indices(len(self.index_list))
+            init_start,init_stop,step = index.indices(len(self.index_list))
 
             return [self[i] for i in range(start, stop, step)]
         elif isinstance(index, int):
-            if index >= len(self):
-                raise IndexError('Index is out of bounds')
-            if index<len(self):
-                index = index+1
-            return self.get_value(index)
+            #if index >= len(self):
+            #    raise IndexError('Index is out of bounds')
+            #if index<len(self):
+            #    index = index+1
+            #    init_index = init_index
+            data_index,init_index = self.index_list[index]
+            return self.get_value(data_index,init_index)
         else:
             raise TypeError('Invalid argument type: {}'.format(type(index)))
 
@@ -140,7 +150,9 @@ class OCTDataset(Dataset):
         ))
         return fig
 
-#file = "/home/Mukherjee/Data/Cross_ext.h5"
-#trans = transforms.Compose([transforms.ToTensor()])
-#data = OCTDataset(h5_file = file,transform=transform, train = True)
+
+
+file = "/home/Mukherjee/Data/Cross_ext.h5"
+trans = transforms.Compose([transforms.ToTensor()])
+data = OCTDataset(h5_file = file,transform=trans, train = True,index_list = data_list)
 #data = OCTDataset(h5_file = file, train = False)
