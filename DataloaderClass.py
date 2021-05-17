@@ -3,23 +3,25 @@ import numpy as np
 from torch.utils.data import Dataset
 from plotly import graph_objects as go
 from torchvision import transforms
+import pandas as pd
 
 class OCTDataset(Dataset):
     """ OCT dataset """
 
 
-    def __init__(self, h5_file, index_list, transform = None, train = False):
+    def __init__(self, h5_loc, index_list, transform = None, train = False):
         """
         Args:
             h5_file (string): Path to the h5 file with annotations and images.
             transform (callable, optional): Optional transform to be applied
             on a sample.
+            index_list (dataframe): Dataframe consisting of index numbers
             init_index (int) : Defines the image that the rest of the dtaset
             should be compared to
             train (boolean,optional) : If true the data output will be in the form
             of arrays/lists else it will be a Dataset object
         """
-        self.h5_file = h5.File(h5_file, 'r')
+        self.h5_file = h5.File(h5_loc, 'r')
         self.position = self.h5_file['position']
         self.octdata = self.h5_file['octdata']
         #self.init_index = init_index
@@ -83,6 +85,8 @@ class OCTDataset(Dataset):
             if self.transform is not None:
                 datum = self.transform(datum)
                 datum = datum.reshape(1,-1,64,64)
+                init_data = self.transform(init_data)
+                init_data = init_data.reshape(1,-1,64,64)
             return init_data, datum, groundT
         datum = self.octdata[str(index)]
         init_data = np.array(self.octdata[str(init_index)])
@@ -91,6 +95,8 @@ class OCTDataset(Dataset):
         if self.transform is not None:
             datum = self.transform(datum)
             datum = datum.reshape(1,-1,64,64)
+            init_data = self.transform(init_data)
+            init_data = init_data.reshape(1,-1,64,64)
         return init_data, datum, pos
 
 
@@ -117,7 +123,7 @@ class OCTDataset(Dataset):
             #if index<len(self):
             #    index = index+1
             #    init_index = init_index
-            data_index,init_index = self.index_list[index]
+            data_index,init_index = self.index_list.loc[index]
             return self.get_value(data_index,init_index)
         else:
             raise TypeError('Invalid argument type: {}'.format(type(index)))
@@ -153,6 +159,8 @@ class OCTDataset(Dataset):
 
 
 file = "/home/Mukherjee/Data/Cross_ext.h5"
+list_loc = "/home/Mukherjee/Data/Cross_ext_index.csv"
 trans = transforms.Compose([transforms.ToTensor()])
-data = OCTDataset(h5_file = file,transform=trans, train = True,index_list = data_list)
+data_list = pd.read_csv(list_loc,header=None)
+data = OCTDataset(h5_loc = file,transform=trans, train = True,index_list = data_list)
 #data = OCTDataset(h5_file = file, train = False)
