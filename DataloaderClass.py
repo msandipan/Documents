@@ -158,9 +158,9 @@ class OCTDataset(Dataset):
 
 
 
-file = "/home/Mukherjee/Data/Cross_ext.h5"
-list_loc = "/home/Mukherjee/Data/Cross_ext_index.csv"
-trans = transforms.Compose([transforms.ToTensor()])
-data_list = pd.read_csv(list_loc,header=None)
-data = OCTDataset(h5_loc = file,transform=trans, train = True,index_list = data_list)
+#file = "/home/Mukherjee/Data/Cross_ext.h5"
+#list_loc = "/home/Mukherjee/Data/Cross_ext_index.csv"
+#trans = transforms.Compose([transforms.ToTensor()])
+#data_list = pd.read_csv(list_loc,header=None)
+#data = OCTDataset(h5_loc = file,transform=trans, train = True,index_list = data_list)
 #data = OCTDataset(h5_file = file, train = False)
