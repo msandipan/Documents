@@ -61,7 +61,7 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
         for init_data, data, labels in tqdm(trainloader):
             i = i+1
             if torch.cuda.is_available():
-                init_data ,data, labels = data.cuda(), labels.cuda(), init_data.cuda()
+                init_data ,data, labels = init_data.cuda(), data.cuda(), labels.cuda()
 
             optimizer.zero_grad()
             target = model(init_data,data)
@@ -87,7 +87,7 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
         model.eval()     # Optional when not using Model Specific layer
         for init_data, data, labels in tqdm(validloader):
             if torch.cuda.is_available():
-                init_data ,data, labels = data.cuda(), labels.cuda(), init_data.cuda()
+                init_data ,data, labels = init_data.cuda(), data.cuda(), labels.cuda()
 
             target = model(init_data,data)
             labels = labels.double()
