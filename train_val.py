@@ -26,11 +26,12 @@ def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_presen
                                 train= True,
                                 index_list = data_list)
 
-        length = len(octdataset)
-        train_len = int(length*train_per)
-        val_len = length-train_len
+
 
         oct_data = octdataset[:]
+        length = len(oct_data)
+        train_len = int(length*train_per)
+        val_len = length-train_len
     else:
         data_path = h5_loc[0:len(h5_loc)-2]+"csv"
         df_oct_data = pd.read_csv(data_path,header=None,memory_map=True)
@@ -63,7 +64,8 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
     #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
     min_valid_loss = np.inf
     i = 0
-    running_loss = 0.0
+    running_t_loss = 0.0
+    running_v_loss = 0.0
     for e in range(epochs):
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
@@ -146,7 +148,8 @@ def main():
     epochs = int(sys.argv[3])
     lr = float(sys.argv[4])
     #print(lr.dtype)
-    criterion = nn.L1Loss()
+    #criterion = nn.L1Loss()
+    criterion = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr = lr)
     #optimizer = torch.optim.Adam(model.parameters(),lr = lr)
 
