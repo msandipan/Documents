@@ -1,5 +1,6 @@
 import h5py as h5
 import numpy as np
+from torch import double, float64
 from torch.utils.data import Dataset
 from plotly import graph_objects as go
 from torchvision import transforms
@@ -82,12 +83,14 @@ class OCTDataset(Dataset):
             init_data = np.array(self.octdata[str(init_index)])
             pos = np.array(self.position[str(index)])
             groundT = self.groundTruth(index,init_index)
+            index_tuple = (init_index,index)
             if self.transform is not None:
                 datum = self.transform(datum)
                 datum = datum.reshape(1,-1,64,64)
                 init_data = self.transform(init_data)
                 init_data = init_data.reshape(1,-1,64,64)
-            return init_data, datum, groundT
+            return init_data, datum, groundT,index_tuple
+
         datum = self.octdata[str(index)]
         init_data = np.array(self.octdata[str(init_index)])
         pos = self.position[str(index)]
@@ -114,8 +117,13 @@ class OCTDataset(Dataset):
         #need to implement slice stuff
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self.index_list))
-            init_start,init_stop,step = index.indices(len(self.index_list))
+            #data = []
+            #init_start,init_stop,step = index.indices(len(self.index_list))
+            #for i in range(start, stop, step):
+            #    datum = np.array(self[i],dtype=object)
+            #    data.append(datum)
 
+            #return np.array(data,dtype=object)
             return [self[i] for i in range(start, stop, step)]
         elif isinstance(index, int):
             #if index >= len(self):
@@ -158,9 +166,9 @@ class OCTDataset(Dataset):
 
 
 
-#file = "/home/Mukherjee/Data/Cross_ext.h5"
-#list_loc = "/home/Mukherjee/Data/Cross_ext_index.csv"
-#trans = transforms.Compose([transforms.ToTensor()])
-#data_list = pd.read_csv(list_loc,header=None)
-#data = OCTDataset(h5_loc = file,transform=trans, train = True,index_list = data_list)
+file = "/home/Mukherjee/Data/Cross_ext.h5"
+list_loc = "/home/Mukherjee/Data/Cross_ext_index.csv"
+trans = transforms.Compose([transforms.ToTensor()])
+data_list = pd.read_csv(list_loc,header=None)
+data = OCTDataset(h5_loc = file,transform=trans, train = True,index_list = data_list)
 #data = OCTDataset(h5_file = file, train = False)
