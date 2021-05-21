@@ -12,24 +12,33 @@ import Network
 
 
 
-writer = SummaryWriter('runs/Siamese_net_experiment_1')
+
 
 
 #need to call dtaloader class nd split into train, val and test
 
-def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42):
+def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_present = True):
 
-    data_list = pd.read_csv(list_loc,header=None)
-    octdataset = OCTDataset(h5_loc,
-                            transform = transforms.Compose([transforms.ToTensor()]),
-                            train= True,
-                            index_list = data_list)
+    if csv_present is False:
+        data_list = pd.read_csv(list_loc,header=None)
+        octdataset = OCTDataset(h5_loc,
+                                transform = transforms.Compose([transforms.ToTensor()]),
+                                train= True,
+                                index_list = data_list)
 
-    length = len(octdataset)
-    train_len = int(length*train_per)
-    val_len = length-train_len
+        length = len(octdataset)
+        train_len = int(length*train_per)
+        val_len = length-train_len
 
-    oct_data = octdataset[:]
+        oct_data = octdataset[:]
+    else:
+        data_path = h5_loc[0:len(h5_loc)-2]+"csv"
+        df_oct_data = pd.read_csv(data_path,header=None,memory_map=True)
+        #oct_data = df_oct_data.to_numpy()
+        oct_data = df_oct_data.values.tolist()
+        length = len(oct_data)
+        train_len = int(length*train_per)
+        val_len = length-train_len
 
 
 
@@ -48,7 +57,8 @@ def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42):
 
 
 def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plot = False):
-
+    if plot is True:
+        writer = SummaryWriter('runs/Siamese_net_experiment_1')
     #criterion = nn.CrossEntropyLoss()
     #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
     min_valid_loss = np.inf
@@ -64,6 +74,7 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
                 init_data ,data, labels = init_data.cuda(), data.cuda(), labels.cuda()
 
             optimizer.zero_grad()
+            print(type(init_data),type(data))
             target = model(init_data,data)
             labels = labels.double()
             #print(traininit.shape,data.shape)
@@ -72,13 +83,13 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
             t_loss.backward()
             optimizer.step()
             if plot == True:
-                running_loss += t_loss.item()
-                if i % 1000 == 999:    # every 10 mini-batches...
+                running_t_loss += t_loss.item()
+                if i % 100 == 99:    # every 1000 mini-batches...
                     # ...log the running loss
                     writer.add_scalar('training loss',
-                            running_loss / 1000,
+                            running_t_loss / 100,
                             epochs * len(trainloader) + i)
-                    running_loss = 0.0
+                    running_t_loss = 0.0
 
             train_loss = t_loss.item() * data.size(0)
 
@@ -92,7 +103,14 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
             target = model(init_data,data)
             labels = labels.double()
             v_loss = criterion(target,labels)
-
+            if plot == True:
+                running_v_loss += v_loss.item()
+                if i % 100 == 99:    # every 1000 mini-batches...
+                    # ...log the running loss
+                    writer.add_scalar('Validation loss',
+                            running_v_loss / 100,
+                            epochs * len(trainloader) + i)
+                    running_v_loss = 0.0
 
             valid_loss = v_loss.item() * data.size(0)
 
@@ -115,7 +133,8 @@ def main():
     train,valid = train_val_test_split(h5_loc = file,
                                        list_loc = data_list,
                                        train_per = 0.7,
-                                       seed = 42)
+                                       seed = 42,csv_present=False)
+
     train_loader = torch.utils.data.DataLoader(dataset= train, batch_size= 1,shuffle=True)
     valid_loader = torch.utils.data.DataLoader(dataset = valid, batch_size= 1)
 
@@ -139,7 +158,7 @@ def main():
             validloader = valid_loader,
             criterion= criterion,
             optimizer= optimizer,
-            epochs= epochs,plot = False)
+            epochs= epochs,plot = True)
 
 
 if __name__ == "__main__":
