@@ -19,45 +19,44 @@ import Network
 
 def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_present = True):
 
-    if csv_present is False:
-        data_list = pd.read_csv(list_loc,header=None)
-        octdataset = OCTDataset(h5_loc,
-                                transform = transforms.Compose([transforms.ToTensor()]),
-                                train= True,
-                                index_list = data_list)
+    data_list = pd.read_csv(list_loc,header=None)
+    octdataset = OCTDataset(h5_loc,
+                            transform = transforms.Compose([transforms.ToTensor()]),
+                            train= True,
+                            index_list = data_list)
 
 
 
-        oct_data = octdataset[:]
-        length = len(oct_data)
-        train_len = int(length*train_per)
-        val_len = length-train_len
-    else:
-        data_path = h5_loc[0:len(h5_loc)-2]+"csv"
-        df_oct_data = pd.read_csv(data_path,header=None,memory_map=True)
-        #oct_data = df_oct_data.to_numpy()
-        oct_data = df_oct_data.values.tolist()
-        length = len(oct_data)
-        train_len = int(length*train_per)
-        val_len = length-train_len
+    #oct_data = [col[1] for col in octdataset[0:100]]
+    oct_data = []
+    for col in octdataset[0:100]:
+        oct_data.append(col[1])
+
+    #oct_data_pointer = [col[2:4] for col in octdataset[:]] #contains the indices and gt
+    oct_data_pointer = []
+    for col in octdataset[:]:
+        oct_data_pointer.append(col[2:4])
+    length = len(octdataset)
+    train_len = int(length*train_per)
+    val_len = length-train_len
 
 
 
 
     #print(octdata[0].shape)
-    train_data,val_data = random_split(oct_data,
+    train_data,val_data = random_split(oct_data_pointer,
                                       [train_len, val_len],
                                        torch.Generator().manual_seed(seed))
 
 
 
-    return train_data,val_data
+    return train_data,val_data,oct_data
 
 
 
 
 
-def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plot = False):
+def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epochs = 1,plot = False):
     if plot is True:
         writer = SummaryWriter('runs/Siamese_net_experiment_1')
     #criterion = nn.CrossEntropyLoss()
@@ -70,13 +69,20 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
         train_loss = 0.0
         model.train()     # Optional when not using Model Specific layer
 
-        for init_data, data, labels in tqdm(trainloader):
+        for labels, index_tuples in tqdm(train_loader):
             i = i+1
+            init_index,index = index_tuples
+            #print(init_index,index)
+            init_data = oct_data[init_index]
+            init_data = init_data.unsqueeze(0)
+            #print(index)
+            data = oct_data[index]
+            data = data.unsqueeze(0)
             if torch.cuda.is_available():
                 init_data ,data, labels = init_data.cuda(), data.cuda(), labels.cuda()
 
             optimizer.zero_grad()
-            print(type(init_data),type(data))
+            #print(type(init_data),type(data))
             target = model(init_data,data)
             labels = labels.double()
             #print(traininit.shape,data.shape)
@@ -90,7 +96,7 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
                     # ...log the running loss
                     writer.add_scalar('training loss',
                             running_t_loss / 100,
-                            epochs * len(trainloader) + i)
+                            epochs * len(train_loader) + i)
                     running_t_loss = 0.0
 
             train_loss = t_loss.item() * data.size(0)
@@ -98,7 +104,13 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
 
         valid_loss = 0.0
         model.eval()     # Optional when not using Model Specific layer
-        for init_data, data, labels in tqdm(validloader):
+        for labels, index_tuples in tqdm(valid_loader):
+
+            init_index,index = index_tuples
+            init_data = oct_data[init_index]
+            init_data = init_data.unsqueeze(0)
+            data = oct_data[index]
+            data = data.unsqueeze(0)
             if torch.cuda.is_available():
                 init_data ,data, labels = init_data.cuda(), data.cuda(), labels.cuda()
 
@@ -111,12 +123,12 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
                     # ...log the running loss
                     writer.add_scalar('Validation loss',
                             running_v_loss / 100,
-                            epochs * len(trainloader) + i)
+                            epochs * len(valid_loader) + i)
                     running_v_loss = 0.0
 
             valid_loss = v_loss.item() * data.size(0)
 
-        print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(validloader)}')
+        print(f'Epoch {e+1} \t\t Training Loss: {train_loss / len(train_loader)} \t\t Validation Loss: {valid_loss / len(valid_loader)}')
         if min_valid_loss > valid_loss:
             print(f'Validation Loss Decreased({min_valid_loss:.6f}--->{valid_loss:.6f}) \t Saving The Model')
             min_valid_loss = valid_loss
@@ -132,7 +144,7 @@ def train_val(model,trainloader,validloader,criterion, optimizer, epochs = 1,plo
 def main():
     file = sys.argv[1]
     data_list = sys.argv[2]
-    train,valid = train_val_test_split(h5_loc = file,
+    train,valid,octdata = train_val_test_split(h5_loc = file,
                                        list_loc = data_list,
                                        train_per = 0.7,
                                        seed = 42,csv_present=False)
@@ -157,8 +169,9 @@ def main():
 
 
     train_val(model = model,
-            trainloader = train_loader,
-            validloader = valid_loader,
+            oct_data=octdata,
+            train_loader = train_loader,
+            valid_loader = valid_loader,
             criterion= criterion,
             optimizer= optimizer,
             epochs= epochs,plot = True)

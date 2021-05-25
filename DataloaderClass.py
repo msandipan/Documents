@@ -83,7 +83,7 @@ class OCTDataset(Dataset):
             init_data = np.array(self.octdata[str(init_index)])
             pos = np.array(self.position[str(index)])
             groundT = self.groundTruth(index,init_index)
-            index_tuple = (init_index,index)
+            index_tuple = (init_index-1,index-1)
             if self.transform is not None:
                 datum = self.transform(datum)
                 datum = datum.reshape(1,-1,64,64)
