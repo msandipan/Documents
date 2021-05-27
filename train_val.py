@@ -6,6 +6,7 @@ import numpy as np
 import torch.nn as nn
 import sys
 import pandas as pd
+import time
 from torch.utils.tensorboard import SummaryWriter
 from DataloaderClass import OCTDataset
 import Network
@@ -23,7 +24,7 @@ def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_presen
     octdataset = OCTDataset(h5_loc,
                             transform = transforms.Compose([transforms.ToTensor()]),
                             train= True,
-                            index_list = data_list)
+                            index_list = data_list,oct_out=True)
 
 
 
@@ -32,10 +33,15 @@ def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_presen
     for col in octdataset[0:100]:
         oct_data.append(col[1])
 
+
+    octdataset = OCTDataset(h5_loc,
+                            transform = transforms.Compose([transforms.ToTensor()]),
+                            train= True,
+                            index_list = data_list)
     #oct_data_pointer = [col[2:4] for col in octdataset[:]] #contains the indices and gt
     oct_data_pointer = []
     for col in octdataset[:]:
-        oct_data_pointer.append(col[2:4])
+        oct_data_pointer.append(col[:])
     length = len(octdataset)
     train_len = int(length*train_per)
     val_len = length-train_len
@@ -58,7 +64,8 @@ def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_presen
 
 def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epochs = 1,plot = False):
     if plot is True:
-        writer = SummaryWriter('runs/Siamese_net_experiment_1')
+        writer_train = SummaryWriter('runs/Siamese_net_experiment_train_1')
+        writer_val = SummaryWriter('runs/Siamese_net_experiment_val_1')
     #criterion = nn.CrossEntropyLoss()
     #optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
     min_valid_loss = np.inf
@@ -94,7 +101,7 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
                 running_t_loss += t_loss.item()
                 if i % 100 == 99:    # every 1000 mini-batches...
                     # ...log the running loss
-                    writer.add_scalar('training loss',
+                    writer_train.add_scalar('training loss',
                             running_t_loss / 100,
                             epochs * len(train_loader) + i)
                     running_t_loss = 0.0
@@ -121,7 +128,7 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
                 running_v_loss += v_loss.item()
                 if i % 100 == 99:    # every 1000 mini-batches...
                     # ...log the running loss
-                    writer.add_scalar('Validation loss',
+                    writer_val.add_scalar('Validation loss',
                             running_v_loss / 100,
                             epochs * len(valid_loader) + i)
                     running_v_loss = 0.0
@@ -133,7 +140,8 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
             print(f'Validation Loss Decreased({min_valid_loss:.6f}--->{valid_loss:.6f}) \t Saving The Model')
             min_valid_loss = valid_loss
             # Saving State Dict
-            torch.save(model.state_dict(), 'saved_model.pth')
+            timestr = time.strftime("%Y%m%d-%H%M%S")
+            torch.save(model.state_dict(), '/models/saved_model_'+timestr+'.pth')
 
 
 
@@ -144,6 +152,7 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
 def main():
     file = sys.argv[1]
     data_list = sys.argv[2]
+    path = sys.argv[3]
     train,valid,octdata = train_val_test_split(h5_loc = file,
                                        list_loc = data_list,
                                        train_per = 0.7,
@@ -155,10 +164,13 @@ def main():
 
     model = Network.generate_model()
     model = model.double()
+    if path != 'None':
+       model.load_state_dict(torch.load(path))
     if torch.cuda.is_available():
         model = model.cuda()
-    epochs = int(sys.argv[3])
-    lr = float(sys.argv[4])
+
+    epochs = int(sys.argv[4])
+    lr = float(sys.argv[5])
     #print(lr.dtype)
     #criterion = nn.L1Loss()
     criterion = nn.MSELoss()

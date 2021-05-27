@@ -1,3 +1,4 @@
+#makae changes to 777
 import h5py as h5
 import numpy as np
 from torch import double, float64
@@ -10,7 +11,7 @@ class OCTDataset(Dataset):
     """ OCT dataset """
 
 
-    def __init__(self, h5_loc, index_list, transform = None, train = False):
+    def __init__(self, h5_loc, index_list, transform = None, train = False,oct_out = False):
         """
         Args:
             h5_file (string): Path to the h5 file with annotations and images.
@@ -28,6 +29,7 @@ class OCTDataset(Dataset):
         #self.init_index = init_index
         self.transform = transform
         self.train = train
+        self.oct_out = oct_out
         self.index_list = index_list
 
 
@@ -89,7 +91,10 @@ class OCTDataset(Dataset):
                 datum = datum.reshape(1,-1,64,64)
                 init_data = self.transform(init_data)
                 init_data = init_data.reshape(1,-1,64,64)
-            return init_data, datum, groundT,index_tuple
+            if self.oct_out is True:
+                return init_data, datum, groundT,index_tuple
+            else :
+                return groundT,index_tuple
 
         datum = self.octdata[str(index)]
         init_data = np.array(self.octdata[str(init_index)])
@@ -117,20 +122,10 @@ class OCTDataset(Dataset):
         #need to implement slice stuff
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self.index_list))
-            #data = []
-            #init_start,init_stop,step = index.indices(len(self.index_list))
-            #for i in range(start, stop, step):
-            #    datum = np.array(self[i],dtype=object)
-            #    data.append(datum)
 
-            #return np.array(data,dtype=object)
             return [self[i] for i in range(start, stop, step)]
         elif isinstance(index, int):
-            #if index >= len(self):
-            #    raise IndexError('Index is out of bounds')
-            #if index<len(self):
-            #    index = index+1
-            #    init_index = init_index
+
             data_index,init_index = self.index_list.loc[index]
             return self.get_value(data_index,init_index)
         else:
