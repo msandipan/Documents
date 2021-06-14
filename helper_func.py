@@ -61,6 +61,7 @@ def read_h5(h5_dir = info.h5_loc,preprocessing = info.ispreprocessing,zoom = inf
         groups = list(h5_data.keys())
         indices = list(h5_data[groups[0]].keys())
         print("Number of Data points:", len(indices))
+        #print(lim)
         for idx in range(0,len(indices)):
             #groups = list(h5_data.keys())
             #indices = list(h5_data[groups[0]].keys())
@@ -79,6 +80,7 @@ def read_h5(h5_dir = info.h5_loc,preprocessing = info.ispreprocessing,zoom = inf
             position_arr.append(position)
 
         if islabels is True:
+
             matched_lables = match_samples(length,position_arr,lim)
             length = length + len(position_arr)
             print("Labels:",len(matched_lables))
@@ -151,15 +153,19 @@ def read_files(file_loc):
     return np.array(data_list)
 
 #print(info.h5_dir_loc)
+#print(info.lim)
+#octdata,labels = read_h5(islabels=True)
 #octdata = read_h5()
 #pos_list = np.array([col[1] for col in octdata])
 
 #gt = groundTruth(labels,pos_list)
 #file_path = "/home/Mukherjee/Data/Related_files"
-#filename = "test_2"
+#filename = "Cross_only"
 #create_files(labels,file_path,filename)
 #data = read_files("/home/Mukherjee/Data/Related_files/test_2_test_labels.txt")
 
-
+#x = np.array([col[0] for col in gt])
+#y = np.array([col[1] for col in gt])
+#z = np.array([col[2] for col in gt])
 
 
