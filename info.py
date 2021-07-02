@@ -1,15 +1,22 @@
-from pandas.core.indexing import is_label_like
 
 
-train = True
-train_file_loc = "/home/Mukherjee/Data/Related_files/test_2_train_labels.txt"
-valid = False
-valid_file_loc = "/home/Mukherjee/Data/Related_files/test_2_valid_labels.txt"
-test = False
-test_file_loc = "/home/Mukherjee/Data/Related_files/test_2_test_labels.txt"
+#train = True
+train_file_loc = "/home/Mukherjee/Data/Related_files/Cross_only_train_labels.txt"
+#valid = False
+valid_file_loc = "/home/Mukherjee/Data/Related_files/Cross_only_valid_labels.txt"
+#test = False
+test_file_loc = "/home/Mukherjee/Data/Related_files/Cross_only_test_labels.txt"
 #helper_func stuff
 h5_loc = "/home/Mukherjee/Data/"
 ispreprocessing = True
 iszoom = True
-lim = [1000000,10000000,10000000] #limits of the x,y nd z difference
+lim = [100,100,100] #limits of the x,y nd z difference
 islabel = False #to print labels pairs
+#train_valid_test
+run = 'run4'
+epochs = 1
+lr = 0.00001
+gamma = 0.9
+train_writer_loc = 'runs/Siamese_net_train_2'
+test_writer_loc = 'runs/Siamese_net_test_error_2'
+model_save_loc = "/models"

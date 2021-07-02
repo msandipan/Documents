@@ -153,15 +153,15 @@ def read_files(file_loc):
     return np.array(data_list)
 
 #print(info.h5_dir_loc)
-#print(info.lim)
-#octdata,labels = read_h5(islabels=True)
+print(info.lim)
+octdata,labels = read_h5(islabels=True)
 #octdata = read_h5()
 #pos_list = np.array([col[1] for col in octdata])
 
 #gt = groundTruth(labels,pos_list)
-#file_path = "/home/Mukherjee/Data/Related_files"
-#filename = "Cross_only"
-#create_files(labels,file_path,filename)
+file_path = "/home/Mukherjee/Data/Related_files"
+filename = "Cross_only(lim100)"
+create_files(labels,file_path,filename)
 #data = read_files("/home/Mukherjee/Data/Related_files/test_2_test_labels.txt")
 
 #x = np.array([col[0] for col in gt])
