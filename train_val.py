@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import shape
 from torch.utils.data import random_split
 from tqdm import tqdm
 import torch
@@ -62,7 +63,7 @@ def train_val_test_split(h5_loc, list_loc, train_per = 0.7, seed = 42,csv_presen
 
 
 
-def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epochs = 1,plot = False):
+def train_val(model,oct_data,train_loader,valid_loader,criterion_train,criterion_val, optimizer, epochs = 1,plot = False):
     if plot is True:
         writer_train = SummaryWriter('runs/Siamese_net_experiment_train_1')
         writer_val = SummaryWriter('runs/Siamese_net_experiment_val_1')
@@ -82,9 +83,11 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
             #print(init_index,index)
             init_data = oct_data[init_index]
             init_data = init_data.unsqueeze(0)
+            print(shape(init_data))
             #print(index)
             data = oct_data[index]
             data = data.unsqueeze(0)
+            print(shape(data))
             if torch.cuda.is_available():
                 init_data ,data, labels = init_data.cuda(), data.cuda(), labels.cuda()
 
@@ -94,7 +97,7 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
             labels = labels.double()
             #print(traininit.shape,data.shape)
             #print(target.dtype,labels.dtype)
-            t_loss = criterion(target,labels)
+            t_loss = criterion_train(target,labels)
             t_loss.backward()
             optimizer.step()
             if plot == True:
@@ -123,7 +126,7 @@ def train_val(model,oct_data,train_loader,valid_loader,criterion, optimizer, epo
 
             target = model(init_data,data)
             labels = labels.double()
-            v_loss = criterion(target,labels)
+            v_loss = criterion_val(target,labels)
             if plot == True:
                 running_v_loss += v_loss.item()
                 if i % 100 == 99:    # every 1000 mini-batches...
@@ -169,11 +172,11 @@ def main():
     if torch.cuda.is_available():
         model = model.cuda()
 
-    epochs = int(sys.argv[4])
-    lr = float(sys.argv[5])
+    epochs = int(sys.argv[1])
+    lr = float(sys.argv[2])
     #print(lr.dtype)
-    #criterion = nn.L1Loss()
-    criterion = nn.MSELoss()
+    criterion_val = nn.L1Loss()
+    criterion_train = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr = lr)
     #optimizer = torch.optim.Adam(model.parameters(),lr = lr)
 

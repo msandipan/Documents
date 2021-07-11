@@ -151,11 +151,11 @@ class OCTDataset(Dataset):
         y=Y.flatten(),
         z=Z.flatten(),
         value=volume.flatten(),
-        isomin=-0.5,
-        isomax=0.5,
+        isomin=-0.3,
+        isomax=0.3,
         opacityscale="uniform",
         opacity=0.5,
-        caps= dict(x_show=False, y_show=False, z_show=True)
+        caps= dict(x_show=False, y_show=False, z_show=False)
         ))
         return fig
 

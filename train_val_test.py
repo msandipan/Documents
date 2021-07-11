@@ -15,8 +15,8 @@ import pandas as pd
 import time
 
 from torch.utils.tensorboard import SummaryWriter
-from DataloaderClassV2 import OCTdatasetV2
-import Network
+from utils.DataloaderClassV2 import OCTdatasetV2
+import Networks.Network as Network
 import info
 
 
