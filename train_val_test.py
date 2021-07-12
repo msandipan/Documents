@@ -28,8 +28,8 @@ def train_val(model,train_loader,valid_loader,criterion_train,criterion_val, opt
         writer_loc = info.train_writer_loc
         writer = SummaryWriter(writer_loc)
 
-    min_valid_loss = np.inf
 
+    min_valid_loss = np.inf
     count_tr = 0
     count_vl = 0
     running_t_loss = 0.0
@@ -181,8 +181,14 @@ def main():
         model = model.double()
         #if path != 'None':
         #   model.load_state_dict(torch.load(path))
+        device = "cpu"
         if torch.cuda.is_available():
-            model = model.cuda()
+            device = "cuda:0"
+            if torch.cuda.device_count() > 1:
+                model = nn.DataParallel(model)
+        model = model.to(device)
+        #if torch.cuda.is_available():
+        #    model = model.cuda()
 
         epochs = info.epochs
         #epochs = 1
